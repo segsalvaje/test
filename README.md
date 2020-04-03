@@ -25,6 +25,9 @@ nmap -sV -sC -sU 10.10.10.10
 
 smbclient -L 10.10.10.10
 
+smbclient.py -u user -p password -i 10.10.10.10
+
 smbmap -u user -p password -H 10.10.10.10
+
 
 ```

